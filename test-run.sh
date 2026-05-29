@@ -2,7 +2,7 @@
 #SBATCH --job-name=check-first
 #SBATCH --account=researchers
 #SBATCH --partition=scavenge
-#SBATCH --gres=gpu:l40s:1
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=80G
 #SBATCH --time=05:00:00
@@ -20,7 +20,7 @@ uv sync
 SLURM_OUTPUT_FILE="logs/${SLURM_JOB_NAME}.${SLURM_JOB_ID}.out"
 
 # First run
-# uv run run.py 
+# uv run run.py \
 #     --model_name llama-3.1-8b \
 #     --dataset sarcasm \
 #     --dataset_path data/sarc/sarcasm.csv \
@@ -29,7 +29,7 @@ SLURM_OUTPUT_FILE="logs/${SLURM_JOB_NAME}.${SLURM_JOB_ID}.out"
 #     --slurm_output "${SLURM_OUTPUT_FILE}" \
 #     -limit 100
 
-# uv run run.py 
+# uv run run.py \
 #     --model_name gemma-3-4b \
 #     --dataset sarcasm \
 #     --dataset_path data/sarc/sarcasm.csv \
@@ -40,8 +40,12 @@ SLURM_OUTPUT_FILE="logs/${SLURM_JOB_NAME}.${SLURM_JOB_ID}.out"
 
 
 uv run -m src.make_second_round_input \
-    --dataset sarcasm
+    --dataset sarcasm \
+    --output_root /home/fril/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir /home/fril/InfluenceDynamicsMAS/results/first
 
 uv run -m src.make_second_round_input \
     --dataset sarcasm \
-    --self_interaction
+    --self_interaction \
+    --output_root /home/fril/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir /home/fril/InfluenceDynamicsMAS/results/first
