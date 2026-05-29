@@ -309,11 +309,9 @@ if __name__ == "__main__":
                     help = 'Specify name of dataset',
                     default='sarcasm')
     ap.add_argument('--output_root',
-                    help='Path of root to save files',
-                    default="/home/results/input_round2")
+                    help='Path of root to save files')
     ap.add_argument('--input_dir',
-                    help='Path of root to load the files',
-                    default="/home/results/first")
+                    help='Path of root to load the files')
     ap.add_argument('--self_interaction',
                     help='If set to true, a dataset for self interaction is created from B:B instances',
                     action='store_true')
