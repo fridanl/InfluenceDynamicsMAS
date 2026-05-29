@@ -407,7 +407,7 @@ def main(args):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('--base_path',
-                default='/home/rp-fril-mhpe',
+                default='/home/results',
                 help='base path for results.')
     ap.add_argument("--dataset", 
                     help="Specify name of dataset",

@@ -310,10 +310,10 @@ if __name__ == "__main__":
                     default='sarcasm')
     ap.add_argument('--output_root',
                     help='Path of root to save files',
-                    default="/home/rp-fril-mhpe/input_round2")
+                    default="/home/results/input_round2")
     ap.add_argument('--input_dir',
                     help='Path of root to load the files',
-                    default="/home/rp-fril-mhpe/first")
+                    default="/home/results/first")
     ap.add_argument('--self_interaction',
                     help='If set to true, a dataset for self interaction is created from B:B instances',
                     action='store_true')

@@ -78,9 +78,9 @@ if __name__ == "__main__":
                     default=7000,
                     help="capacity of maximum number of ids for match_type")
     ap.add_argument("--input_dir",
-                    default="/home/rp-fril-mhpe/input_round2")
+                    default="/home/results/input_round2")
     ap.add_argument("--output_dir",
-                    default="/home/rp-fril-mhpe/subsampled_input_round2")
+                    default="/home/results/subsampled_input_round2")
     ap.add_argument('--dataset',
                     help= 'Specify the dataset of interest')
     args = ap.parse_args()
