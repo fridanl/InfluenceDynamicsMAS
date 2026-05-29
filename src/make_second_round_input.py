@@ -277,7 +277,9 @@ def main(args):
     )
     random.seed(t_config.random_seed)
 
-    outdir = args.output_root 
+    outdir = Path(args.output_root)
+    (outdir / args.dataset).mkdir(parents=True, exist_ok=True) 
+
     model_claim_dict, discard = load_and_preprocess(combined, t_config)
     if not args.self_interaction:
         discard.to_csv(f'{outdir}/{args.dataset}/discarded.csv', index=False)                                  
