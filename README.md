@@ -41,7 +41,7 @@ The script is used for both the first and second round.
 
 #### Example: Round 1 
 ```BASH
-uv run run.py 
+uv run run.py \
     --model_name llama-3.1-8b \
     --dataset sarcasm \
     --dataset_path data/sarc/sarcasm.csv \
@@ -54,8 +54,8 @@ Use `python3 run.py` if you are not using `uv`.
 
 #### Example: Round 2 
 ```BASH
-uv run run.py 
-    --model_name llama-3.1-8b
+uv run run.py \
+    --model_name llama-3.1-8b \
     --dataset sarcasm \
     --dataset_path /subsampled_input_round2/sarcasm/llama-3.1-8b_disagree.csv \ # Path to constructed opinion sets
     --repetition 1 \  #1 repetition, since the opinion sets have 10 repetitions.
@@ -78,11 +78,11 @@ Additionally, self-interaction (i.e. homogeneous system) opinions sets can be cr
 This all happens in `src/make_second_round_input.py`.
 
 ```BASH
-uv run -m src.make_second_round_input 
+uv run -m src.make_second_round_input \
     --dataset sarcasm
 
 # Or for self-interaction 
-uv run -m src.make_second_round_input 
+uv run -m src.make_second_round_input \
     --dataset sarcasm \
     --self_interaction
 ```
@@ -94,13 +94,13 @@ This will create one input file for every receiver model, paired with all specif
 If one wishes to subsample the input for round 2, one can do so with the script: `src/make_subsample.py`. 
 
 ```BASH
-uv run src/make_subsample.py 
+uv run src/make_subsample.py \
     --suffix disagree \
     --cap 7000 \ # Note: cap specifies the # claims, therefore the size of the dataset will become cap*repetition.
     --dataset sarcasm \
 
 # Or for self-interaction agreeing
-uv run src/make_subsample.py 
+uv run src/make_subsample.py \
     --glob_pattern *_self_interaction_agree.csv \
     --cap 1000 \
     --dataset sarcasm
@@ -111,7 +111,7 @@ When all runs are done, the results can be computed by running the `src/results.
 This will compute influence scores for every model and dataset, and create files of three aggregation levels: on a claim level, on a match type level, and on a model level. 
 
 ```BASH
-uv run src/results.py 
+uv run src/results.py \
     --dataset sarcasm \
     --experiment main
 ```
