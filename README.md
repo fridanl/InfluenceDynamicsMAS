@@ -57,7 +57,7 @@ Use `python3 run.py` if you are not using `uv`.
 uv run run.py \
     --model_name llama-3.1-8b \
     --dataset sarcasm \
-    --dataset_path /subsampled_input_round2/sarcasm/llama-3.1-8b_disagree.csv \ # Path to constructed opinion sets
+    --dataset_path $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled/sarcasm/llama-3.1-8b_disagree_subsampled.csv \ # Path to constructed opinion sets
     --repetition 1 \  #1 repetition, since the opinion sets have 10 repetitions.
     --round 2 \
     --history \
@@ -79,12 +79,16 @@ This all happens in `src/make_second_round_input.py`.
 
 ```BASH
 uv run -m src.make_second_round_input \
-    --dataset sarcasm
+    --dataset sarcasm \
+    --output_root $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/first
 
 # Or for self-interaction 
 uv run -m src.make_second_round_input \
     --dataset sarcasm \
-    --self_interaction
+    --self_interaction \
+    --output_root $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/first
 ```
 
 This will create one input file for every receiver model, paired with all specified peer models.
@@ -98,12 +102,16 @@ uv run src/make_subsample.py \
     --suffix disagree \
     --cap 7000 \ # Note: cap specifies the # claims, therefore the size of the dataset will become cap*repetition.
     --dataset sarcasm \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --output_dir $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled
 
 # Or for self-interaction agreeing
 uv run src/make_subsample.py \
-    --glob_pattern *_self_interaction_agree.csv \
+    --glob_pattern "*_self_interaction_agree.csv" \
     --cap 1000 \
-    --dataset sarcasm
+    --dataset sarcasm \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --output_dir $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled
 ```
 ## Evaluation
 
