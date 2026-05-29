@@ -1,0 +1,193 @@
+import json
+from enum import Enum
+from pydantic import BaseModel
+from typing import List, Dict, Type, Literal
+from dataclasses import dataclass
+
+# ----- Output Models, Round Specific (w/ or wo/ explanation) ----------- 
+class LabelSarc(str, Enum):
+    sarcastic = 'sarcastic'
+    literal = 'literal'
+
+class OutputSarc(BaseModel):
+    label: LabelSarc
+    explanation: str
+
+class OutputSarcR2(BaseModel):
+    label: LabelSarc
+
+class LabelSentiment(str, Enum):
+    positive = 'positive'
+    negative = 'negative'
+
+class OutputSentiment(BaseModel):
+    label: LabelSentiment
+    explanation: str
+
+class OutputSentimentR2(BaseModel):
+    label: LabelSentiment
+
+class LabelCommonsense(str, Enum):
+    positive = 'yes'
+    negative = 'no'
+
+class OutputCommonsense(BaseModel):
+    label: LabelCommonsense
+    explanation: str
+
+class OutputCommonsenseR2(BaseModel):
+    label: LabelCommonsense
+
+# ----- Core prompt builders ---------
+def make_system_json(schema: dict, *, round: int) -> str:
+    base = (
+        "Return ONLY a minified JSON object that conforms to this schema: \n"
+        f"{json.dumps(schema, ensure_ascii=False)}\n"
+        "Rules:\n"
+        "- Output JSON only. No prose, no markdown, no extra text.\n"
+    )
+    if round == 1:
+        base += (
+            "- Keys: label, explanation. \n"
+            "- explanation MUST be 30 words or fewer \n" #! Also reconsider this
+        )
+    if round == 2:
+        base += (
+            "- Keys: label"
+        )
+    return base 
+
+def make_user_r1(*, task_question: str) -> str:
+    # Task specific question as input
+    return (
+        f"Task: {task_question}\n"
+        'Claim: "{claim}"\n'
+        'Provide an explanation with your reasoning.'
+    )
+
+def make_user_r2(*, task_question: str, history: bool, no_explanation: bool) -> str:
+    base = (
+        f"Task: {task_question}\n"
+        'Claim: "{claim}"\n'
+    )
+
+    if history:
+        if no_explanation:
+            base += (
+                'You have previously said "{label_receiver}"\n'
+                'However, a peer of yours labelled the claim as "{label_sender}"\n'
+            )
+        else: 
+            base += (
+                'You have previously said "{label_receiver}", with the following explanation: "{explanation_receiver}."\n'
+                'However, a peer of yours labelled the claim as "{label_sender}", with the following explanation: "{explanation_sender}"\n'
+            )
+    else:
+        if no_explanation:
+            base += (
+            'A peer of yours labelled the claim as "{label_sender}"\n'
+            )
+        else:
+            base += (
+            'A peer of yours labelled the claim as "{label_sender}", with the following explanation: "{explanation_sender}"\n'
+            )   
+    # repeat
+    base += (
+        f"Having considered that, {task_question}\n"
+        'Claim: "{claim}"\n'
+    )
+        
+
+    return base
+
+# ------ Registry types ------- 
+@dataclass(frozen=True)
+class DatasetTaskSpec:
+    '''
+    Defines dataset-specific task wording and output models.
+    '''
+    dataset: str 
+    task_question: str 
+    output_r1: Type[BaseModel]
+    output_r2: Type[BaseModel]
+    negative_label: str 
+    positive_label: str 
+
+
+@dataclass(frozen=True)
+class PromptSpec:
+    '''
+    Defines dataset- and round-specific user- and system prompts, and json output format.
+    '''
+    dataset: str
+    output_json: dict
+    round: Literal[1, 2]
+    history: bool
+    no_explanation: bool 
+    system: str 
+    user_template: str 
+    output_model: Type[BaseModel]
+
+
+# ----- Dataset registry ------
+DATASETS: Dict[str, DatasetTaskSpec] = {
+    'sarcasm': DatasetTaskSpec(
+                dataset = 'sarcasm',
+                task_question = 'Is this claim sarcastic or literal?',
+                output_r1 = OutputSarc,
+                output_r2 = OutputSarcR2,
+                negative_label = 'literal',
+                positive_label = 'sarcastic'
+                ),
+    'sentiment': DatasetTaskSpec(
+                dataset = 'sentiment',
+                task_question = 'Does this claim have positive or negative sentiment?',
+                output_r1 = OutputSentiment,
+                output_r2 = OutputSentimentR2,
+                negative_label='negative',
+                positive_label='positive'
+                ),
+    'commonsense': DatasetTaskSpec(
+                dataset = 'commonsense',
+                task_question = 'Is this claim true?',
+                output_r1 = OutputCommonsense,
+                output_r2 = OutputCommonsenseR2,
+                negative_label = 'no',
+                positive_label='yes'
+                )            
+            }
+
+def get_prompt_spec(dataset: str, round: int, history: bool, no_explanation: bool) -> PromptSpec:
+    key = dataset.lower()
+    if key not in DATASETS:
+        raise ValueError(f'Unknown dataset {dataset}. Known: {', '.join(DATASETS.keys())}')
+    
+    ds = DATASETS[key]
+
+    if round == 1:
+        schema = ds.output_r1.model_json_schema()
+        return PromptSpec(
+            dataset=key,
+            output_json = schema, # the json of the output format 
+            round = 1,
+            history=history,
+            no_explanation=no_explanation,
+            system=make_system_json(schema, round=1),
+            user_template=make_user_r1(task_question=ds.task_question),
+            output_model=ds.output_r1, # the object of the output format 
+        )
+    
+    if round == 2:
+        schema = ds.output_r2.model_json_schema()
+        return PromptSpec(
+            dataset=key,
+            output_json = schema,
+            round = 2,
+            history=history,
+            no_explanation=no_explanation,
+            system=make_system_json(schema, round=2),
+            user_template=make_user_r2(task_question=ds.task_question, history=history, no_explanation=no_explanation),
+            output_model=ds.output_r2
+        )
+
+    raise ValueError('Round must be either 1 or 2')
