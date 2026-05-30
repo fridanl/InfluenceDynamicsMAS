@@ -2,15 +2,15 @@
 
 ## Abstract 
 
-Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where multiple agents collaborate towards a shared solution. 
-While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to how these differ when agents are powered by distinct model types.
-In systems where models differ in size, architecture and training data, it remains unclear how agents can influence each others' outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
+Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where agents collaborate towards a shared solution. 
+While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to heterogeneous agent populations.
+In such systems, where the models differ in size, architecture and training data, it remains unclear how agents can influence each others' outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
 We propose a framework for measuring influence dynamics in LLM-based MAS. 
 An agent is tasked with a binary classification task in isolation, and is later asked to revisit this task, but now considering another agent's opinion. 
 Influence is measured as the shift in the agent's certainty in its opinion before and after interaction.
-We evaluate several open-source models on three natural language processing tasks. 
+We evaluate several open-source models on three natural language understanding tasks. 
 Results show that interaction alone produces frequent and substantial opinion shifts, even for models that are initially certain in their opinion. 
-Furthermore, influence is driven mainly be the stability of the model being influenced and less by the influential power of the peer.
+Furthermore, influence is driven mainly by the stability of the model being influenced and less by the influential power of the peer.
 Similarly, the transition from homogeneous to heterogeneous systems does not affect all models uniformly. Depending on the model, heterogeneity may either increase or decrease susceptibility. 
 Overall, system composition, model types, and model roles are important factors in influence dynamics, and thus need to be considered when building robust MAS.
 
