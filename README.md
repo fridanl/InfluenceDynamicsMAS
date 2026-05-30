@@ -124,7 +124,7 @@ uv run src/results.py \
     --experiment main
 ```
 
-## Results reported in paper
+## Results Reported in Paper
 
 All tables and figures reported in the paper is created in the notebook: `src/main_results.ipynb`.
 
