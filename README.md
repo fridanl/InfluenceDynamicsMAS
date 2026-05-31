@@ -4,7 +4,7 @@
 
 Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where agents collaborate towards a shared solution. 
 While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to heterogeneous agent populations.
-In such systems, where the models differ in size, architecture and training data, it remains unclear how agents can influence each others' outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
+In such systems, where the models differ in size, architecture and training data, it remains unclear how agents can influence each other's outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
 We propose a framework for measuring influence dynamics in LLM-based MAS. 
 An agent is tasked with a binary classification task in isolation, and is later asked to revisit this task, but now considering another agent's opinion. 
 Influence is measured as the shift in the agent's certainty in its opinion before and after interaction.
