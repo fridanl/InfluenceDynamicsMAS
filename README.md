@@ -128,6 +128,10 @@ uv run src/results.py \
 
 All tables and figures reported in the paper is created in the notebook: `src/main_results.ipynb`.
 
+Note (31 May 2026): GitHub may currently have issues rendering Jupyter notebooks in the browser. If `main_results.ipynb` does not preview correctly on GitHub, please either download the notebook or view it in Google Colab: [main_results.ipynb](https://colab.research.google.com/github/fridanl/InfluenceDynamicsMAS/blob/main/src/main_results.ipynb). 
+
+Related GitHub discussion: https://github.com/orgs/community/discussions/197350. 
+
 ## Input Files and Raw Outputs
 
 All raw results are available at our [figshare repository](https://figshare.com/s/0663638a98e0efc47105).
