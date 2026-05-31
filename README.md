@@ -2,15 +2,15 @@
 
 ## Abstract 
 
-Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where multiple agents collaborate towards a shared solution. 
-While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to how these differ when agents are powered by distinct model types.
-In systems where models differ in size, architecture and training data, it remains unclear how agents can influence each others' outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
+Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where agents collaborate towards a shared solution. 
+While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to heterogeneous agent populations.
+In such systems, where the models differ in size, architecture and training data, it remains unclear how agents can influence each others' outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
 We propose a framework for measuring influence dynamics in LLM-based MAS. 
 An agent is tasked with a binary classification task in isolation, and is later asked to revisit this task, but now considering another agent's opinion. 
 Influence is measured as the shift in the agent's certainty in its opinion before and after interaction.
-We evaluate several open-source models on three natural language processing tasks. 
+We evaluate several open-source models on three natural language understanding tasks. 
 Results show that interaction alone produces frequent and substantial opinion shifts, even for models that are initially certain in their opinion. 
-Furthermore, influence is driven mainly be the stability of the model being influenced and less by the influential power of the peer.
+Furthermore, influence is driven mainly by the stability of the model being influenced and less by the influential power of the peer.
 Similarly, the transition from homogeneous to heterogeneous systems does not affect all models uniformly. Depending on the model, heterogeneity may either increase or decrease susceptibility. 
 Overall, system composition, model types, and model roles are important factors in influence dynamics, and thus need to be considered when building robust MAS.
 
@@ -57,7 +57,7 @@ Use `python3 run.py` if you are not using `uv`.
 uv run run.py \
     --model_name llama-3.1-8b \
     --dataset sarcasm \
-    --dataset_path /subsampled_input_round2/sarcasm/llama-3.1-8b_disagree.csv \ # Path to constructed opinion sets
+    --dataset_path $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled/sarcasm/llama-3.1-8b_disagree_subsampled.csv \ # Path to constructed opinion sets
     --repetition 1 \  #1 repetition, since the opinion sets have 10 repetitions.
     --round 2 \
     --history \
@@ -79,12 +79,16 @@ This all happens in `src/make_second_round_input.py`.
 
 ```BASH
 uv run -m src.make_second_round_input \
-    --dataset sarcasm
+    --dataset sarcasm \
+    --output_root $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/first
 
 # Or for self-interaction 
 uv run -m src.make_second_round_input \
     --dataset sarcasm \
-    --self_interaction
+    --self_interaction \
+    --output_root $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/first
 ```
 
 This will create one input file for every receiver model, paired with all specified peer models.
@@ -98,12 +102,16 @@ uv run src/make_subsample.py \
     --suffix disagree \
     --cap 7000 \ # Note: cap specifies the # claims, therefore the size of the dataset will become cap*repetition.
     --dataset sarcasm \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --output_dir $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled
 
 # Or for self-interaction agreeing
 uv run src/make_subsample.py \
-    --glob_pattern *_self_interaction_agree.csv \
+    --glob_pattern "*_self_interaction_agree.csv" \
     --cap 1000 \
-    --dataset sarcasm
+    --dataset sarcasm \
+    --input_dir $HOME/InfluenceDynamicsMAS/results/input_round2 \
+    --output_dir $HOME/InfluenceDynamicsMAS/results/input_round2_subsampled
 ```
 ## Evaluation
 
@@ -117,9 +125,13 @@ uv run src/results.py \
     --base_path $HOME/InfluenceDynamicsMAS/results
 ```
 
-## Results reported in paper
+## Results Reported in Paper
 
 All tables and figures reported in the paper is created in the notebook: `src/main_results.ipynb`.
+
+Note (31 May 2026): GitHub may currently have issues rendering Jupyter notebooks in the browser. If `main_results.ipynb` does not preview correctly on GitHub, please either download the notebook or view it in Google Colab: [main_results.ipynb](https://colab.research.google.com/github/fridanl/InfluenceDynamicsMAS/blob/main/src/main_results.ipynb). 
+
+Related GitHub discussion: https://github.com/orgs/community/discussions/197350. 
 
 ## Input Files and Raw Outputs
 
