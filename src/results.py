@@ -308,7 +308,9 @@ def print_first_round_summary(first: pd.DataFrame, ds_config: DatasetTaskSpec):
     print('Consistent / inconsistent labelling distribution')
     model_rates = summarise_model_rates(grouped_df=grouped_first)
     print(model_rates)
-    model_rates.to_csv(Path('evaluation') / ds_config.dataset / args.experiment / 'claims_label_consistency.csv')
+    output_path = Path('evaluation') / ds_config.dataset / args.experiment / 'claims_label_consistency.csv'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    model_rates.to_csv(output_path)
     
     print('Overall positive rate')
     print(compute_overall_positive_rate(first, conf=ds_config))
@@ -407,7 +409,6 @@ def main(args):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('--base_path',
-                default='/home/results',
                 help='base path for results.')
     ap.add_argument("--dataset", 
                     help="Specify name of dataset",

@@ -18,11 +18,6 @@ sampling_presets:
     top_k: 20
 
 profiles:
-  tester: # this is a test model, so we dont have to queue a large model on the HPC
-    repo_id: unsloth/gemma-3-4b-it-unsloth-bnb-4bit
-    quantization: bitsandbytes
-    has_default_sampling_params: False
-    sampling: *qwenhigh
   llama-3.3-70b-low-temp: 
     repo_id: unsloth/Llama-3.3-70B-Instruct-bnb-4bit
     quantization: bitsandbytes

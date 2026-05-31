@@ -113,7 +113,8 @@ This will compute influence scores for every model and dataset, and create files
 ```BASH
 uv run src/results.py \
     --dataset sarcasm \
-    --experiment main
+    --experiment main \
+    --base_path $HOME/InfluenceDynamicsMAS/results
 ```
 
 ## Results reported in paper

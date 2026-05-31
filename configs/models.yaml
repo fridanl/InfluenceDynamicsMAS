@@ -15,33 +15,33 @@ sampling_presets:
 
 
 profiles:
-  llama-3.3-70b: # new
+  llama-3.3-70b: 
     repo_id: unsloth/Llama-3.3-70B-Instruct-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: True
-  llama-3.1-8b: # new
+  llama-3.1-8b: 
     repo_id: unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: True
-  gpt-oss-20b: # new
+  gpt-oss-20b: 
     repo_id: unsloth/gpt-oss-20b-unsloth-bnb-4bit 
     quantization: bitsandbytes
     has_default_sampling_params: False
     sampling: *gpt20b
-  qwen-2.5-72b: # new
+  qwen-2.5-72b: 
     repo_id: unsloth/Qwen2.5-72B-Instruct-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: True
-  qwen-2.5-7b: # old
+  qwen-2.5-7b: 
     repo_id: unsloth/Qwen2.5-7B-Instruct-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: True
-  gemma-3-4b: # new
+  gemma-3-4b: 
     repo_id: unsloth/gemma-3-4b-it-unsloth-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: False
     sampling: *gemma4b
-  gemma-3-27b: # new
+  gemma-3-27b: 
     repo_id: unsloth/gemma-3-27b-it-bnb-4bit
     quantization: bitsandbytes
     has_default_sampling_params: False
