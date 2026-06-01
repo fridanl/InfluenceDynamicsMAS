@@ -148,6 +148,7 @@ The data repository contains the following data:
 - `no_history.zip`: Output files from memoryless receiver experiment.
 - `no_explanation.zip`: Output files from no explanations experiment. 
 
+Furthermore, all results created by the `results.py` script is uploaded as `evaluation.zip`. This needs to be downloaded if you wish to run `main_results.ipynb`.  
 
 ## Environment
 
