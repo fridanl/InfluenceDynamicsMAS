@@ -1,2 +1,6 @@
 data/.DS_Store
 .DS_Store
+
+evaluation/
+evaluation.zip
+src/main_results_old.ipynb
