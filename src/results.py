@@ -3,12 +3,56 @@ from pathlib import Path
 from dataclasses import dataclass, field
 import pandas as pd
 import yaml
+import numpy as np
 from utils.prompt_registry import DATASETS, DatasetTaskSpec
 
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", None)
 pd.set_option("display.max_colwidth", None)
+
+
+def se_proportion(p, m):
+    '''
+    Standard error of a proportion estimated from `m` independent binary trials (repetitions).
+    
+    SE(p) = sqrt( p * (1 - p) / m )
+    '''
+
+    p = np.asarray(p, dtype = float)
+    m = np.asarray(m, dtype = float)
+
+    with np.errstate(invalid='ignore', divide='ignore'):
+        se = np.sqrt(p * (1 - p) / m)
+    return se
+
+def se_add(se_values):
+    '''
+    Standard error of a sum of N independent quantities, given their individual standard error.
+    
+    SE(p_1+...+p_N) = sqrt( sum_ i SE(p_i)^2)
+
+    NaNs (rows that don't contribute to this particular sum, e.g. because they were clipped) are dropped before combining.
+    '''
+    se_values = pd.Series(se_values, dtype=float).dropna()
+    if len(se_values) == 0:
+        return np.nan
+    return np.sqrt(np.sum(se_values**2))
+    
+
+def se_average(se_values):
+    '''
+    Standard error of an average of N quantities, given their individual standard errors.
+
+    SE(p_1 + ... + p_N) / N = (1/N) * sqrt( sum_i SE(p_i)^2 )
+
+    NaNs are dropped before combining and N reflects the count after dropping. 
+    '''
+    se_values = pd.Series(se_values, dtype=float).dropna()
+    n = len(se_values)
+    if n == 0:
+        return np.nan
+    return np.sqrt(np.sum(se_values ** 2)) / n
 
 
 @dataclass
@@ -177,25 +221,36 @@ def get_delta_df(first_df: pd.DataFrame, second_df: pd.DataFrame, conf: DatasetT
     first_df['is_positive'] = first_df['label'] == positive
     first_df['is_negative'] = first_df['label'] == negative
 
+    #! Added 
+    # Compute the first SE(p_alpha) (F1): standard error of the first-round positive/negative rate for each (model, id).
     first_grouped = (
         first_df
         .groupby(['model', 'id'])
         .agg(
             p_pos = ('is_positive', 'mean'),
-            p_neg = ('is_negative', 'mean')
+            p_neg = ('is_negative', 'mean'),
+            m_first = ('id', 'size')
         ).reset_index()
     )
 
+    first_grouped['se_p_pos'] = se_proportion(p = first_grouped['p_pos'], m = first_grouped['m_first'])
+    first_grouped['se_p_neg'] = se_proportion(p = first_grouped['p_neg'], m = first_grouped['m_first'])
+
     # Create flag 'flip', to keep track whether the receiver changed its label to the label the sender proposed. 
     second_df['flip'] = (second_df['label_receiver_now'] == second_df['label_sender_before'])
+
 
     # Group by such that we get all cases and the p(label proposed by sender) over the 10 repetitions. 
     second_grouped = (
         second_df
         .groupby(['model_receiver', 'model_sender', 'label_receiver_before', 'label_sender_before', 'id', 'match_type'])['flip']
-        .mean()
-        .reset_index(name = 'p_round_2')
+        .agg(p_round_2 = 'mean', m_second = 'size')
+        .reset_index()
     )
+
+    #! Added 
+    # Compute the SE(p_{alpha|beta}) F1: standard error of the second-round flip rate
+    second_grouped['se_p_round_2'] = se_proportion(p = second_grouped['p_round_2'], m = second_grouped['m_second'])
 
     # Left join baseline probabilities (to take into account, that we have subsampled for r2, and only some cases on first df is in second df)
     combined = second_grouped.merge(
@@ -208,11 +263,19 @@ def get_delta_df(first_df: pd.DataFrame, second_df: pd.DataFrame, conf: DatasetT
     # Flag direction of influence
     influenced_towards_pos = combined['label_sender_before'] == positive
 
-    # Delta = interaction(label_sender) -  baseline p(label_sender)
-    combined['delta'] = (
-        combined['p_round_2'] - combined['p_pos']
-    ).where(influenced_towards_pos, combined['p_round_2'] - combined['p_neg'])
+    # Baseline probability p_alpha, depends on the influence direction, i.e. whether the peer proposes negative or positive label
+    combined['p_baseline'] = combined['p_pos'].where(influenced_towards_pos, combined['p_neg'])
+    combined['se_p_baseline'] = combined['se_p_pos'].where(influenced_towards_pos, combined['se_p_neg'])
 
+    # Delta = interaction(label_sender) -  baseline p(label_sender)
+    combined['delta'] = combined['p_round_2'] - combined['p_baseline']
+
+    #! Added
+    #Standard error of combining the two rounds
+    combined['se_delta'] = np.sqrt(
+        combined['se_p_baseline'] ** 2 + combined['se_p_round_2'] ** 2
+    )
+    
     # max delta: The maximum a receiver can be influenced towards the proposed label, relative to baseline, i.e. reinforcing stance on proposed label. 
     combined['max_delta'] = (
         1 - combined['p_pos']
@@ -238,7 +301,22 @@ def summarise_deltas(delta_df):
     delta_df = delta_df.copy()
     delta_df['possible_neg'] = delta_df['max_delta_neg'] > 0
     delta_df['possible_pos'] = delta_df['max_delta'] > 0
-    
+
+
+    near_boundary_frac = (delta_df['delta'].abs() < delta_df['se_delta']).mean()
+    print(f'[INFO] Fraction of rows within 1 SE of the delta=0 clip boundary: {near_boundary_frac:.2%}')
+
+    #! Added 
+    # a row with delta > 0 contributes its full SE(delta) to the positive
+    # sum and contributes exactly 0 (deterministically) to the negative sum, and vice versa.
+    # So we only pool a row's SE(delta) into the side it actually contributes to.
+    delta_df['se_delta_pos'] = delta_df['se_delta'].where(delta_df['delta_positive_only'] > 0)
+    delta_df['se_delta_neg'] = delta_df['se_delta'].where(delta_df['delta_negative_only'] < 0)
+
+
+    # Every row of delta_df is one instance (for a given id there can be up to two rows, one per influence direction
+    # 1->0 and 0->1 - both pooled into the same match_type). 
+    # We sum the raw contributions directly (summation is associative, so there's no need for an intermediate per-id grouping step for the point estimates, i.e. box before 'gather all instances'), and combine SE(delta) across all of them via F2 in a single pass:
     per_match_type = (
         delta_df
         .groupby(['model_receiver', 'model_sender', 'match_type'])
@@ -249,32 +327,60 @@ def summarise_deltas(delta_df):
             total_negative_budget = ('max_delta_neg', 'sum'),
             possible_positive_count = ('possible_pos', 'sum'), 
             possible_negative_count = ('possible_neg', 'sum'),
-            count = ('delta', 'size')
+            count = ('delta', 'size'),
+            se_delta_pos_tot = ('se_delta_pos', se_add),
+            se_delta_neg_tot = ('se_delta_neg', se_add)
         )
         .reset_index()
     )
 
     per_match_type['positive_delta_realisation'] = (
         per_match_type['total_positive_delta'] / 
-        per_match_type['total_positive_budget'].replace(0, pd.NA)
+        per_match_type['total_positive_budget'].replace(0, np.nan)
     )
     per_match_type['negative_delta_realisation'] = (
         per_match_type['total_negative_delta'] / 
-        per_match_type['total_negative_budget'].replace(0, pd.NA)
+        per_match_type['total_negative_budget'].replace(0, np.nan)
     )
 
-    
-    # Computing macro-averages 
+    #! We treat total_negative_budget and total_positive_budget as fixed and not random, then the SE of the 'adjusted' delta can be calculated as below.
+    #! Added
+    per_match_type['se_positive_delta_realisation'] = (
+        per_match_type['se_delta_pos_tot'] / 
+        per_match_type['total_positive_budget'].replace(0, np.nan)
+    )
+
+    per_match_type['se_negative_delta_realisation'] = (
+            per_match_type['se_delta_neg_tot'] / 
+            per_match_type['total_negative_budget'].replace(0, np.nan)
+        )
+
+    #! Added
     per_model_pair = (
         per_match_type
         .groupby(['model_receiver', 'model_sender'])
         .agg(
             macro_pos_delta_realisation = ('positive_delta_realisation', 'mean'),
             macro_neg_delta_realisation = ('negative_delta_realisation', 'mean'),
+            se_macro_pos_delta_realisation = ('se_positive_delta_realisation', se_average),
+            se_macro_neg_delta_realisation = ('se_negative_delta_realisation', se_average),
             count = ('count', 'sum') 
         )
         .reset_index()
     )
+
+    # OLD 
+    # Computing macro-averages 
+    # per_model_pair = (
+    #     per_match_type
+    #     .groupby(['model_receiver', 'model_sender'])
+    #     .agg(
+    #         macro_pos_delta_realisation = ('positive_delta_realisation', 'mean'),
+    #         macro_neg_delta_realisation = ('negative_delta_realisation', 'mean'),
+    #         count = ('count', 'sum') 
+    #     )
+    #     .reset_index()
+    # )
 
     return per_match_type, per_model_pair
 
