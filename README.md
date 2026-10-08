@@ -1,18 +1,7 @@
-# Influence Dynamics in Heterogeneous LLM-Based Multi-Agent Systems
+# Peer Influence across Heterogeneous AI Models
 
 ## Abstract 
-
-Large Language Models (LLMs) are increasingly deployed in Multi-Agent Systems (MAS) where agents collaborate towards a shared solution. 
-While prior work has shown that opinion dynamics in these systems are complex and can be misaligned with expectations, little focus has been paid to heterogeneous agent populations.
-In such systems, where the models differ in size, architecture and training data, it remains unclear how agents can influence each other's outcomes, and whether a shift to a heterogeneous setting affects influence dynamics. 
-We propose a framework for measuring influence dynamics in LLM-based MAS. 
-An agent is tasked with a binary classification task in isolation, and is later asked to revisit this task, but now considering another agent's opinion. 
-Influence is measured as the shift in the agent's certainty in its opinion before and after interaction.
-We evaluate several open-source models on three natural language understanding tasks. 
-Results show that interaction alone produces frequent and substantial opinion shifts, even for models that are initially certain in their opinion. 
-Furthermore, influence is driven mainly by the stability of the model being influenced and less by the influential power of the peer.
-Similarly, the transition from homogeneous to heterogeneous systems does not affect all models uniformly. Depending on the model, heterogeneity may either increase or decrease susceptibility. 
-Overall, system composition, model types, and model roles are important factors in influence dynamics, and thus need to be considered when building robust MAS.
+When two AI agents disagree, who persuades whom? As multi-agent systems increasingly combine language models of different families and sizes, the answer can determine which judgments survive interaction. Measuring persuasion as the probabilistic shift in an agent's decision after a single exchange with a dissenting peer, we test seven open-weight models across three language understanding tasks. We find that persuasion is strong: when models disagree, receivers often abandon their initial judgment after seeing a peer's answer and explanation. Surprisingly, however, neither standalone certainty nor model scale reliably predicts persuasion dynamics. Models producing almost perfectly consistent decisions in isolation can be among the most susceptible to persuasion, and small models can match larger ones as persuaders and resist their influence just as effectively. Furthermore, we show that the size of the shift depends more on the susceptibility of the listener than on the persuasiveness of the speaker. Persuasion patterns are therefore specific to each model pairing, with heterogeneity amplifying persuasion in some combinations and suppressing it in others, allowing a dissenting agent running a small model to overturn the judgments of a much larger one. These findings show that the behavior of interacting models cannot be inferred from their individual properties but must be evaluated in the combinations in which they will operate.
 
 ## Usage
 
@@ -128,10 +117,6 @@ uv run src/results.py \
 ## Results Reported in Paper
 
 All tables and figures reported in the paper is created in the notebook: `src/main_results.ipynb`.
-
-Note (31 May 2026): GitHub may currently have issues rendering Jupyter notebooks in the browser. If `main_results.ipynb` does not preview correctly on GitHub, please either download the notebook or view it in Google Colab: [main_results.ipynb](https://colab.research.google.com/github/fridanl/InfluenceDynamicsMAS/blob/main/src/main_results.ipynb). 
-
-Related GitHub discussion: https://github.com/orgs/community/discussions/197350. 
 
 ## Input Files and Raw Outputs
 
